@@ -48,7 +48,7 @@ GitHub リポジトリ上で以下の設定を行うことで、毎週の自動�
 ## 📦 開発・手動実行
 
 ```bash
-pip install nflreadpy pandas pytz icalendar polars
+pip install nflreadpy pandas pytz icalendar polars pyarrow
 python3 make_packers_calendar.py
 ```
 実行後、`dist/` ディレクトリに `packers.ics` および `packers.csv` が生成されます。
