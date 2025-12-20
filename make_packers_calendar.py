@@ -63,7 +63,7 @@ def generate_csv(df, season, filename):
 def generate_ics(df, season, filename):
     """カレンダー登録用のICSを生成する"""
     cal = Calendar()
-    cal.add('prodid', '-//Packers Schedule Generator//mxm.dk//')
+    cal.add('prodid', '-//GB Schedule Generator//mxm.dk//')
     cal.add('version', '2.0')
 
     for _, row in df.iterrows():
@@ -79,7 +79,7 @@ def generate_ics(df, season, filename):
         is_home = row['home_team'] == 'GB'
         connector = "vs" if is_home else "@"
         opponent = row['away_team'] if is_home else row['home_team']
-        summary = f"🏈 Packers {connector} {opponent} (Week {row['week']})"
+        summary = f"GB {connector} {opponent} (Week {row['week']})"
         
         event.add('summary', summary)
         event.add('dtstart', start_dt)
