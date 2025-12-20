@@ -1,4 +1,3 @@
-import argparse
 import datetime
 import os
 import sys
@@ -79,11 +78,18 @@ def generate_ics(df, seasons_str, filename):
 
         event = Event()
         
-        # Summary format: 🏈 Packers vs Opponent (Week X) or 🏈 Packers @ Opponent (Week X)
+        # Summary format: GB 24-21 vs DET (Week X) or GB @ DET (Week X)
         is_home = row['home_team'] == 'GB'
         connector = "vs" if is_home else "@"
         opponent = row['away_team'] if is_home else row['home_team']
-        summary = f"GB {connector} {opponent} (Week {row['week']})"
+        
+        score_str = ""
+        if not pd.isna(row['home_score']) and not pd.isna(row['away_score']):
+            gb_score = row['home_score'] if is_home else row['away_score']
+            opp_score = row['away_score'] if is_home else row['home_score']
+            score_str = f" {int(gb_score)}-{int(opp_score)}"
+            
+        summary = f"GB {connector} {opponent}{score_str} (Week {row['week']})"
         
         event.add('summary', summary)
         event.add('dtstart', start_dt)
@@ -101,33 +107,12 @@ def generate_ics(df, seasons_str, filename):
     print(f"ICS generated: {filename}")
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate Packers schedule CSV and ICS')
-    parser.add_argument('season_range', type=str, nargs='?', help='Season year or range (e.g. 2025 or 2024-2025). If omitted, fetch all from 1999.')
-    args = parser.parse_args()
-
-    # Parse seasons
-    if args.season_range:
-        if '-' in args.season_range:
-            try:
-                start, end = map(int, args.season_range.split('-'))
-                seasons = list(range(start, end + 1))
-            except ValueError:
-                print(f"Invalid season range format: {args.season_range}. Use YYYY or YYYY-YYYY.")
-                sys.exit(1)
-        else:
-            try:
-                seasons = [int(args.season_range)]
-            except ValueError:
-                print(f"Invalid season format: {args.season_range}. Use YYYY or YYYY-YYYY.")
-                sys.exit(1)
-        seasons_str = args.season_range
-    else:
-        # Default: 2000 to current year + 1
-        current_year = datetime.datetime.now().year
-        start_year = 2000
-        end_year = current_year + 1
-        seasons = list(range(start_year, end_year + 1))
-        seasons_str = f"{start_year}-{end_year}"
+    # Default: 2000 to current year + 1
+    current_year = datetime.datetime.now().year
+    start_year = 2000
+    end_year = current_year + 1
+    seasons = list(range(start_year, end_year + 1))
+    seasons_str = f"{start_year}-{end_year}"
 
     # Fetch data
     gb_games = fetch_schedule(seasons)
