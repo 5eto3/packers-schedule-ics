@@ -14,7 +14,8 @@ GitHub リポジトリ上で以下の設定を行うことで、毎週の自動�
 ### 2. GitHub Pages の有効化
 1. **GitHub Actions を手動で一度実行する**ことで、自動的に `gh-pages` という名前のブランチが作成されます（詳細は「3. 初回実行」を参照）。
 2. ブランチ作成後、**Settings > Pages** を開きます。
-3. **Build and deployment > Branch** で `gh-pages` を選択し、保存（Save）をクリックします。
+3. **Build and deployment > Source** で `Deploy from a branch` を選択します（デフォルトでこれになっているはずです）。
+4. **Build and deployment > Branch** で `gh-pages` および `/(root)` を選択し、保存（Save）をクリックします。
 
 ### 3. 初回・手動実行方法
 1. リポジトリ上部の **Actions** タブを選択します。
