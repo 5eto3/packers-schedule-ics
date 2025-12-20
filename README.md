@@ -1,54 +1,27 @@
 # Packers Schedule ICS Generator
 
-NFL（Green Bay Packers）の全期間のスケジュールを `nflreadpy` から自動取得し、GoogleカレンダーやiOSカレンダーで購読可能な形式に公開するプロジェクトです。
+NFL（Green Bay Packers）の過去から最新までの全スケジュールを自動取得し、Googleカレンダーや各種カレンダーアプリで購読可能な形式で提供するプロジェクトです。
 
 ## 📅 カレンダーの購読
 
-GitHub Pages を有効化すると、以下の URL をカレンダーアプリに登録するだけで、常に最新のスケジュールが自動反映されます。
+以下の URL をカレンダーアプリに登録するだけで、常に最新のスケジュールと試合結果が自動的に反映されます。
 
 **購読用 URL:**
 `https://5eto3.github.io/packers-schedule-ics/packers.ics`
 
 ### Google カレンダーへの追加方法
-1. Google カレンダーを開きます。
+1. [Google カレンダー](https://calendar.google.com/)を開きます。
 2. 左側の「他のカレンダー」の横にある「＋」をクリックし、「URL で追加」を選択します。
 3. 上記の購読用 URL を貼り付け、「カレンダーを追加」をクリックします。
 
 ---
 
-## 🛠️ 自動同期のセットアップ方法
+##  更新の仕組み
 
-GitHub リポジトリ上で以下の設定を行うことで、毎週の自動更新と公開が始まります。
+- **定期更新**: 毎週月曜日の朝に自動的に更新されます。
+- **内容**: 2000年シーズンからの全試合を網羅しており、終了した試合にはスコアが表示されます。
+- **タイムゾーン**: 全ての試合は日本標準時 (JST) で表示されます。
 
-### 1. GitHub Actions の権限設定
-1. リポジトリの **Settings > Actions > General** を開きます。
-2. 下部の **Workflow permissions** を `Read and write permissions` に変更して保存（Save）します。
-   - これにより、アクションがカレンダーを生成して公開用ブランチに自動保存できるようになります。
-
-### 2. GitHub Pages の有効化
-1. **GitHub Actions を手動で一度実行する**ことで、自動的に `gh-pages` という名前のブランチが作成されます（手順3参照）。
-2. ブランチ作成後、**Settings > Pages** を開きます。
-3. **Build and deployment > Branch** で `gh-pages` を選択し、保存（Save）をクリックします。
-
-### 3. 初回実行（手動）
-1. リポジトリ上部の **Actions** タブを選択します。
-2. 左側の **Update Packers Calendar** を選択します。
-3. `Run workflow` ボタンをクリックすると、スクリプトが実行され、カレンダーファイルが生成・デプロイされます。
-   - 数分待つと `gh-pages` ブランチが作成され、URL でアクセスできるようになります。
-   - 以後は毎週月曜日の朝に自動で実行されます。
-
----
-
-## 🚀 自動更新の仕組み
-
-- **定期実行**: 毎週月曜日の朝に自動実行。
-- **取得範囲**: 2000 年から現在年+1年までの全データを自動取得（1999年は時刻データなしのため除外）。
-- **JST 変換**: 米国東部時間 (ET) を日本標準時 (JST) へ自動変換。
-
-## 📦 開発・手動実行
-
-```bash
-pip install nflreadpy pandas pytz icalendar polars pyarrow
-python3 make_packers_calendar.py
-```
-実行後、`dist/` ディレクトリに `packers.ics` および `packers.csv` が生成されます。
+## ⚠️ 注意事項
+- 試合開始時刻が未確定（TBD）の場合は、公式のスケジュールが確定次第、自動更新によって反映されます。
+- このリポジトリの管理・セットアップ方法については [SETUP.md](./SETUP.md) を参照してください。
