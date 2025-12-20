@@ -34,7 +34,10 @@ def convert_to_jst(row):
     gametime = row['gametime'] # HH:MM (ET)
 
     if pd.isna(gametime) or gametime == "" or gametime is None:
-        return None
+        try:
+            return datetime.datetime.strptime(gameday, '%Y-%m-%d').date()
+        except:
+            return None
 
     # ET timezone (handles DST automatically)
     et_tz = pytz.timezone('US/Eastern')
@@ -53,7 +56,10 @@ def convert_to_jst(row):
 def generate_csv(df, filename):
     """確認用のCSVを生成する"""
     output_df = pd.DataFrame()
-    output_df['start_jst'] = df['start_jst'].dt.strftime('%Y-%m-%d %H:%M')
+    output_df['start_jst'] = df['start_jst'].apply(
+        lambda x: x.strftime('%Y-%m-%d %H:%M') if isinstance(x, datetime.datetime) 
+        else (x.strftime('%Y-%m-%d (TBD)') if x is not None else "")
+    )
     output_df['home_away'] = df.apply(lambda r: 'home' if r['home_team'] == 'GB' else 'away', axis=1)
     output_df['opponent'] = df.apply(lambda r: r['away_team'] if r['home_team'] == 'GB' else r['home_team'], axis=1)
     output_df['week'] = df['week']
@@ -70,13 +76,21 @@ def generate_ics(df, filename):
     cal.add('x-wr-calname', "Packers Schedule")
 
     for _, row in df.iterrows():
-        if pd.isna(row['start_jst']):
+        start_val = row['start_jst']
+        if start_val is None or pd.isna(start_val):
             continue
 
-        start_dt = row['start_jst']
-        end_dt = start_dt + datetime.timedelta(hours=3)
-
         event = Event()
+        is_tbd = not isinstance(start_val, datetime.datetime)
+
+        if is_tbd:
+            # All-day event
+            event.add('dtstart', start_val)
+            event.add('dtend', start_val + datetime.timedelta(days=1))
+        else:
+            # Regular event
+            event.add('dtstart', start_val)
+            event.add('dtend', start_val + datetime.timedelta(hours=3))
         
         # Summary format: GB 24-21 vs DET (Week X) or GB @ DET (Week X)
         is_home = row['home_team'] == 'GB'
@@ -90,10 +104,10 @@ def generate_ics(df, filename):
             score_str = f" {int(gb_score)}-{int(opp_score)}"
             
         summary = f"GB {connector} {opponent}{score_str} (Week {row['week']})"
+        if is_tbd:
+            summary = f"[TBD] {summary}"
         
         event.add('summary', summary)
-        event.add('dtstart', start_dt)
-        event.add('dtend', end_dt)
         event.add('dtstamp', datetime.datetime.now(pytz.utc))
         
         # Unique ID based on season and week
