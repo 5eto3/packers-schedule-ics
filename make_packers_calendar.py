@@ -1,11 +1,14 @@
 import argparse
 import datetime
+import os
 import sys
 import pandas as pd
 import pytz
 import nflreadpy
 from icalendar import Calendar, Event
 import polars as pl
+ 
+OUTPUT_DIR = "dist"
 
 def fetch_schedule(seasons):
     """nflreadpyを使用してスケジュールを取得し、GBの試合のみにフィルタリングする"""
@@ -130,9 +133,12 @@ def main():
     # Sort by time
     gb_games = gb_games.sort_values(['season', 'week', 'gameday'])
 
+    # Create output directory
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
     # Generate files
-    csv_filename = f"packers_{args.season_range}.csv"
-    ics_filename = f"packers_{args.season_range}.ics"
+    csv_filename = os.path.join(OUTPUT_DIR, f"packers_{args.season_range}.csv")
+    ics_filename = os.path.join(OUTPUT_DIR, f"packers_{args.season_range}.ics")
 
     generate_csv(gb_games, args.season_range, csv_filename)
     generate_ics(gb_games, args.season_range, ics_filename)
