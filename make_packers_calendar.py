@@ -102,23 +102,32 @@ def generate_ics(df, seasons_str, filename):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Packers schedule CSV and ICS')
-    parser.add_argument('season_range', type=str, help='Season year or range (e.g. 2025 or 2024-2025)')
+    parser.add_argument('season_range', type=str, nargs='?', help='Season year or range (e.g. 2025 or 2024-2025). If omitted, fetch all from 1999.')
     args = parser.parse_args()
 
     # Parse seasons
-    if '-' in args.season_range:
-        try:
-            start, end = map(int, args.season_range.split('-'))
-            seasons = list(range(start, end + 1))
-        except ValueError:
-            print(f"Invalid season range format: {args.season_range}. Use YYYY or YYYY-YYYY.")
-            sys.exit(1)
+    if args.season_range:
+        if '-' in args.season_range:
+            try:
+                start, end = map(int, args.season_range.split('-'))
+                seasons = list(range(start, end + 1))
+            except ValueError:
+                print(f"Invalid season range format: {args.season_range}. Use YYYY or YYYY-YYYY.")
+                sys.exit(1)
+        else:
+            try:
+                seasons = [int(args.season_range)]
+            except ValueError:
+                print(f"Invalid season format: {args.season_range}. Use YYYY or YYYY-YYYY.")
+                sys.exit(1)
+        seasons_str = args.season_range
     else:
-        try:
-            seasons = [int(args.season_range)]
-        except ValueError:
-            print(f"Invalid season format: {args.season_range}. Use YYYY or YYYY-YYYY.")
-            sys.exit(1)
+        # Default: 2000 to current year + 1
+        current_year = datetime.datetime.now().year
+        start_year = 2000
+        end_year = current_year + 1
+        seasons = list(range(start_year, end_year + 1))
+        seasons_str = f"{start_year}-{end_year}"
 
     # Fetch data
     gb_games = fetch_schedule(seasons)
@@ -136,12 +145,12 @@ def main():
     # Create output directory
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-    # Generate files
-    csv_filename = os.path.join(OUTPUT_DIR, f"packers_{args.season_range}.csv")
-    ics_filename = os.path.join(OUTPUT_DIR, f"packers_{args.season_range}.ics")
+    # Generate files (Fixed names for subscription)
+    csv_filename = os.path.join(OUTPUT_DIR, "packers.csv")
+    ics_filename = os.path.join(OUTPUT_DIR, "packers.ics")
 
-    generate_csv(gb_games, args.season_range, csv_filename)
-    generate_ics(gb_games, args.season_range, ics_filename)
+    generate_csv(gb_games, seasons_str, csv_filename)
+    generate_ics(gb_games, seasons_str, ics_filename)
 
 if __name__ == "__main__":
     main()
