@@ -7,11 +7,11 @@ import nflreadpy
 from icalendar import Calendar, Event
 import polars as pl
 
-def fetch_schedule(season):
+def fetch_schedule(seasons):
     """nflreadpyを使用してスケジュールを取得し、GBの試合のみにフィルタリングする"""
-    print(f"Fetching schedule for {season}...")
+    print(f"Fetching schedules for {seasons}...")
     try:
-        schedules = nflreadpy.load_schedules(seasons=[season])
+        schedules = nflreadpy.load_schedules(seasons=seasons)
     except Exception as e:
         print(f"Error loading schedules: {e}")
         sys.exit(1)
@@ -60,11 +60,12 @@ def generate_csv(df, season, filename):
     output_df.to_csv(filename, index=False)
     print(f"CSV generated: {filename}")
 
-def generate_ics(df, season, filename):
+def generate_ics(df, seasons_str, filename):
     """カレンダー登録用のICSを生成する"""
     cal = Calendar()
     cal.add('prodid', '-//GB Schedule Generator//mxm.dk//')
     cal.add('version', '2.0')
+    cal.add('x-wr-calname', f"Packers Schedule ({seasons_str})")
 
     for _, row in df.iterrows():
         if pd.isna(row['start_jst']):
@@ -87,7 +88,7 @@ def generate_ics(df, season, filename):
         event.add('dtstamp', datetime.datetime.now(pytz.utc))
         
         # Unique ID based on season and week
-        uid = f"GB-{season}-{row['game_type']}-{row['week']}@packers-schedule"
+        uid = f"GB-{row['season']}-{row['game_type']}-{row['week']}@packers-schedule"
         event.add('uid', uid)
 
         cal.add_component(event)
@@ -98,28 +99,43 @@ def generate_ics(df, season, filename):
 
 def main():
     parser = argparse.ArgumentParser(description='Generate Packers schedule CSV and ICS')
-    parser.add_argument('season', type=int, help='Season year (e.g. 2025)')
+    parser.add_argument('season_range', type=str, help='Season year or range (e.g. 2025 or 2024-2025)')
     args = parser.parse_args()
 
+    # Parse seasons
+    if '-' in args.season_range:
+        try:
+            start, end = map(int, args.season_range.split('-'))
+            seasons = list(range(start, end + 1))
+        except ValueError:
+            print(f"Invalid season range format: {args.season_range}. Use YYYY or YYYY-YYYY.")
+            sys.exit(1)
+    else:
+        try:
+            seasons = [int(args.season_range)]
+        except ValueError:
+            print(f"Invalid season format: {args.season_range}. Use YYYY or YYYY-YYYY.")
+            sys.exit(1)
+
     # Fetch data
-    gb_games = fetch_schedule(args.season)
+    gb_games = fetch_schedule(seasons)
 
     if gb_games.empty:
-        print(f"No games found for season {args.season}.")
+        print(f"No games found for seasons {seasons}.")
         return
 
     # Process times
     gb_games['start_jst'] = gb_games.apply(convert_to_jst, axis=1)
     
     # Sort by time
-    gb_games = gb_games.sort_values('gameday')
+    gb_games = gb_games.sort_values(['season', 'week', 'gameday'])
 
     # Generate files
-    csv_filename = f"packers_{args.season}.csv"
-    ics_filename = f"packers_{args.season}.ics"
+    csv_filename = f"packers_{args.season_range}.csv"
+    ics_filename = f"packers_{args.season_range}.ics"
 
-    generate_csv(gb_games, args.season, csv_filename)
-    generate_ics(gb_games, args.season, ics_filename)
+    generate_csv(gb_games, args.season_range, csv_filename)
+    generate_ics(gb_games, args.season_range, ics_filename)
 
 if __name__ == "__main__":
     main()
