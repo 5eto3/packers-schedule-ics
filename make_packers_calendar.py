@@ -50,7 +50,7 @@ def convert_to_jst(row):
         print(f"Error converting time for {gameday} {gametime}: {e}")
         return None
 
-def generate_csv(df, season, filename):
+def generate_csv(df, filename):
     """確認用のCSVを生成する"""
     output_df = pd.DataFrame()
     output_df['start_jst'] = df['start_jst'].dt.strftime('%Y-%m-%d %H:%M')
@@ -62,12 +62,12 @@ def generate_csv(df, season, filename):
     output_df.to_csv(filename, index=False)
     print(f"CSV generated: {filename}")
 
-def generate_ics(df, seasons_str, filename):
+def generate_ics(df, filename):
     """カレンダー登録用のICSを生成する"""
     cal = Calendar()
     cal.add('prodid', '-//GB Schedule Generator//mxm.dk//')
     cal.add('version', '2.0')
-    cal.add('x-wr-calname', f"Packers Schedule ({seasons_str})")
+    cal.add('x-wr-calname', "Packers Schedule")
 
     for _, row in df.iterrows():
         if pd.isna(row['start_jst']):
@@ -134,8 +134,8 @@ def main():
     csv_filename = os.path.join(OUTPUT_DIR, "packers.csv")
     ics_filename = os.path.join(OUTPUT_DIR, "packers.ics")
 
-    generate_csv(gb_games, seasons_str, csv_filename)
-    generate_ics(gb_games, seasons_str, ics_filename)
+    generate_csv(gb_games, csv_filename)
+    generate_ics(gb_games, ics_filename)
 
 if __name__ == "__main__":
     main()
